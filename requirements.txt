@@ -1,0 +1,8 @@
+Flask
+Flask-SQLAlchemy==3.0.2
+Flask-Marshmallow==0.15.0
+Werkzeug
+spacy==3.8.4
+requests==2.28.1
+beautifulsoup4==4.11.1
+stripe==11.6.0

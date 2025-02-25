@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - BritSync</title>
+</head>
+<body>
+    <h1>Welcome, {{ user.email }}</h1>
+    <p>Subscription: {{ user.subscription }}</p>
+    {% if user.cv %}
+        <p>Your CV has been uploaded.</p>
+    {% else %}
+        <p>You have not uploaded your CV. <a href="{{ url_for('upload_cv') }}">Upload now</a></p>
+    {% endif %}
+    <p>
+        <a href="{{ url_for('take_exam') }}">Take Exam</a> |
+        <a href="{{ url_for('screen_cv_route') }}">View CV Feedback</a> |
+        <a href="{{ url_for('jobs') }}">View Jobs</a>
+    </p>
+</body>
+</html>

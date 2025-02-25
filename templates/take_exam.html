@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Take Exam - BritSync</title>
+</head>
+<body>
+    <h1>Exam for {{ user.email }}</h1>
+    <form method="post">
+        {% for q in questions %}
+            <p>{{ q.question }}</p>
+            <input type="text" name="answer" placeholder="Your answer" required/><br/>
+        {% endfor %}
+        <button type="submit">Submit Exam</button>
+    </form>
+</body>
+</html>
