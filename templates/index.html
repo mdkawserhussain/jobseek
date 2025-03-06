@@ -2,10 +2,13 @@
 <html>
 <head>
     <title>BritSync - AI Driven CV Bank</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-    <h1>Welcome to BritSync</h1>
-    <a href="{{ url_for('register') }}">Register</a> |
-    <a href="{{ url_for('login') }}">Login</a>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-lg text-center">
+        <h1 class="text-2xl font-bold mb-6">Welcome to BritSync</h1>
+        <a href="{{ url_for('register') }}" class="text-indigo-600 hover:text-indigo-500">Register</a> |
+        <a href="{{ url_for('login') }}" class="text-indigo-600 hover:text-indigo-500">Login</a>
+    </div>
 </body>
 </html>

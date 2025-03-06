@@ -2,15 +2,22 @@
 <html>
 <head>
     <title>Take Exam - BritSync</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-    <h1>Exam for {{ user.email }}</h1>
-    <form method="post">
-        {% for q in questions %}
-            <p>{{ q.question }}</p>
-            <input type="text" name="answer" placeholder="Your answer" required/><br/>
-        {% endfor %}
-        <button type="submit">Submit Exam</button>
-    </form>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-lg">
+        <h1 class="text-2xl font-bold mb-6 text-center">Exam for {{ user.email }}</h1>
+        <form method="post" class="space-y-4">
+            {% for q in questions %}
+                <div>
+                    <p class="text-gray-700">{{ q.question }}</p>
+                    <input type="text" name="answer" placeholder="Your answer" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"/>
+                </div>
+            {% endfor %}
+            <div class="flex items-center justify-between"></div>
+                <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Submit Exam</button>
+            </div>
+        </form>
+    </div>
 </body>
 </html>

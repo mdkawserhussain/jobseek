@@ -6,14 +6,56 @@ from scraper import scrape_jobs
 from payment import process_payment
 from exam import generate_exam, grade_exam
 from werkzeug.security import generate_password_hash, check_password_hash
+import os
+from werkzeug.utils import secure_filename
+import logging
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 
 app = Flask(__name__)
 app.config.from_object(Config)
 app.secret_key = Config.SECRET_KEY
+app.config['UPLOAD_FOLDER'] = 'uploads/'
+
+logging.basicConfig(level=logging.DEBUG)
+
+# Create the uploads directory if it doesn't exist
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
 
 db.init_app(app)
 with app.app_context():
     db.create_all()
+
+def send_email(to_address, subject, body, attachment_path=None):
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = Config.MAIL_USERNAME
+        msg['To'] = to_address
+        msg['Subject'] = subject
+
+        msg.attach(MIMEText(body, 'plain'))
+
+        if attachment_path:
+            attachment = open(attachment_path, "rb")
+            part = MIMEBase('application', 'octet-stream')
+            part.set_payload((attachment).read())
+            encoders.encode_base64(part)
+            part.add_header('Content-Disposition', f"attachment; filename= {attachment_path}")
+            msg.attach(part)
+
+        server = smtplib.SMTP(Config.MAIL_SERVER, Config.MAIL_PORT)
+        server.starttls()
+        server.login(Config.MAIL_USERNAME, Config.MAIL_PASSWORD)
+        text = msg.as_string()
+        server.sendmail(Config.MAIL_USERNAME, to_address, text)
+        server.quit()
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+        flash("Failed to send email. Please try again later.")
 
 # -------------------------
 # User Registration Endpoint
@@ -76,7 +118,7 @@ def dashboard():
     if not user_id:
         flash("Please log in first.")
         return redirect(url_for('login'))
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     return render_template('dashboard.html', user=user)
 
 # -------------------------
@@ -89,19 +131,32 @@ def upload_cv():
         flash("Unauthorized.")
         return redirect(url_for('login'))
     
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if request.method == 'POST':
-        cv_text = request.form.get('cv_text')
-        if not cv_text:
-            flash("No CV content provided.")
+        if 'cv_file' not in request.files:
+            flash("No file part.")
             return redirect(url_for('upload_cv'))
-        # Save CV and run screening
-        feedback = screen_cv(cv_text, subscription=user.subscription)
-        cv = CV(content=cv_text, feedback=feedback, user_id=user.id)
-        db.session.add(cv)
-        db.session.commit()
-        flash("CV uploaded and screened.")
-        return redirect(url_for('screen_cv_route'))
+        file = request.files['cv_file']
+        if file.filename == '':
+            flash("No selected file.")
+            return redirect(url_for('upload_cv'))
+        if file and file.filename.endswith('.pdf'):
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
+            feedback = screen_cv(file_path, subscription=user.subscription)
+            new_cv = CV(content=file_path, feedback=feedback, user_id=user.id)
+            db.session.add(new_cv)
+            db.session.commit()
+            flash("File successfully uploaded and screened.")
+            
+            # Send the CV to the employer's email
+            employer_email = "employer@example.com"  # Replace with the actual employer's email
+            subject = "New CV Submission"
+            body = f"Dear Employer,\n\nA new CV has been submitted by {user.email}.\n\nFeedback:\n{feedback}\n\nBest regards,\nBritSync"
+            send_email(employer_email, subject, body, attachment_path=file_path)
+            
+            return redirect(url_for('screen_cv_route'))
     
     return render_template('upload_cv.html', user=user)
 
@@ -111,7 +166,7 @@ def screen_cv_route():
     if not user_id:
         flash("Unauthorized.")
         return redirect(url_for('login'))
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if not user.cv:
         flash("Please upload your CV first.")
         return redirect(url_for('upload_cv'))
@@ -126,7 +181,7 @@ def take_exam():
     if not user_id:
         flash("Unauthorized.")
         return redirect(url_for('login'))
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if request.method == 'POST':
         answers = request.form.getlist('answer')
         # For demonstration, assume questions were stored in session
@@ -160,7 +215,7 @@ def employer_reply():
     if not user_id:
         return jsonify({"message": "Unauthorized"}), 401
     reply_content = request.get_json().get('reply')
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     # For basic users, require a small fee to view employer replies
     if user.subscription == "basic":
         return jsonify({"status": "Payment required", "fee": 0.50})
@@ -177,7 +232,7 @@ def pay():
         return jsonify({"message": "Unauthorized"}), 401
     token = request.get_json().get('token')
     amount = request.get_json().get('amount')
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     # Process the payment (dummy integration)
     if process_payment(user, amount, "On-Demand Charge"):
         payment_record = Payment(amount=amount, description="On-Demand Charge", user_id=user.id)

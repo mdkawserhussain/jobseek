@@ -2,19 +2,22 @@
 <html>
 <head>
     <title>Dashboard - BritSync</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-    <h1>Welcome, {{ user.email }}</h1>
-    <p>Subscription: {{ user.subscription }}</p>
-    {% if user.cv %}
-        <p>Your CV has been uploaded.</p>
-    {% else %}
-        <p>You have not uploaded your CV. <a href="{{ url_for('upload_cv') }}">Upload now</a></p>
-    {% endif %}
-    <p>
-        <a href="{{ url_for('take_exam') }}">Take Exam</a> |
-        <a href="{{ url_for('screen_cv_route') }}">View CV Feedback</a> |
-        <a href="{{ url_for('jobs') }}">View Jobs</a>
-    </p>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-lg">
+        <h1 class="text-2xl font-bold mb-6 text-center">Welcome, {{ user.email }}</h1>
+        <p class="text-gray-700">Subscription: {{ user.subscription }}</p>
+        {% if user.cv %}
+            <p class="text-green-600">Your CV has been uploaded.</p>
+        {% else %}
+            <p class="text-red-600">You have not uploaded your CV. <a href="{{ url_for('upload_cv') }}" class="text-indigo-600 hover:text-indigo-500">Upload now</a></p>
+        {% endif %}
+        <p class="mt-4">
+            <a href="{{ url_for('take_exam') }}" class="text-indigo-600 hover:text-indigo-500">Take Exam</a> |
+            <a href="{{ url_for('screen_cv_route') }}" class="text-indigo-600 hover:text-indigo-500">View CV Feedback</a> |
+            <a href="{{ url_for('jobs') }}" class="text-indigo-600 hover:text-indigo-500">View Jobs</a>
+        </p>
+    </div>
 </body>
 </html>
