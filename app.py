@@ -44,15 +44,22 @@ def send_email(to_address, subject, body, attachment_path=None):
             part = MIMEBase('application', 'octet-stream')
             part.set_payload((attachment).read())
             encoders.encode_base64(part)
-            part.add_header('Content-Disposition', f"attachment; filename= {attachment_path}")
+            filename = os.path.basename(attachment_path)  # Get the filename from the path
+            part.add_header('Content-Disposition', f"attachment; filename= {filename}")
             msg.attach(part)
 
-        server = smtplib.SMTP(Config.MAIL_SERVER, Config.MAIL_PORT)
-        server.starttls()
+        print(f"Connecting to SMTP server: {Config.MAIL_SERVER}:{Config.MAIL_PORT}")
+        server = smtplib.SMTP_SSL(Config.MAIL_SERVER, Config.MAIL_PORT)
+        print("Starting SSL...")
         server.login(Config.MAIL_USERNAME, Config.MAIL_PASSWORD)
+        print("Logged in to SMTP server")
         text = msg.as_string()
         server.sendmail(Config.MAIL_USERNAME, to_address, text)
         server.quit()
+        print(f"Email sent successfully to {to_address}")
+    except smtplib.SMTPException as e:
+        print(f"SMTP error occurred: {e}")
+        flash("Failed to send email. Please try again later.")
     except Exception as e:
         print(f"Failed to send email: {e}")
         flash("Failed to send email. Please try again later.")
@@ -151,11 +158,16 @@ def upload_cv():
             flash("File successfully uploaded and screened.")
             
             # Send the CV to the employer's email
-            employer_email = "employer@example.com"  # Replace with the actual employer's email
+            employer_email = "career@britsync.co.uk"  # Replace with the actual employer's email
             subject = "New CV Submission"
             body = f"Dear Employer,\n\nA new CV has been submitted by {user.email}.\n\nFeedback:\n{feedback}\n\nBest regards,\nBritSync"
             send_email(employer_email, subject, body, attachment_path=file_path)
             
+            # Send the CV to raselkathalbagan@gmail.com
+            #rasel_email = "raselkathalbagan@gmail.com"
+            #send_email(rasel_email, subject, body, attachment_path=file_path)
+            
+            flash("File successfully uploaded and screened. Emails sent.")
             return redirect(url_for('screen_cv_route'))
     
     return render_template('upload_cv.html', user=user)
