@@ -4,20 +4,52 @@
     <title>Dashboard - BritSync</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100 flex items-center justify-center h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-lg">
-        <h1 class="text-2xl font-bold mb-6 text-center">Welcome, {{ user.email }}</h1>
-        <p class="text-gray-700">Subscription: {{ user.subscription }}</p>
-        {% if user.cv %}
-            <p class="text-green-600">Your CV has been uploaded.</p>
-        {% else %}
-            <p class="text-red-600">You have not uploaded your CV. <a href="{{ url_for('upload_cv') }}" class="text-indigo-600 hover:text-indigo-500">Upload now</a></p>
-        {% endif %}
-        <p class="mt-4">
-            <a href="{{ url_for('take_exam') }}" class="text-indigo-600 hover:text-indigo-500">Take Exam</a> |
-            <a href="{{ url_for('screen_cv_route') }}" class="text-indigo-600 hover:text-indigo-500">View CV Feedback</a> |
-            <a href="{{ url_for('jobs') }}" class="text-indigo-600 hover:text-indigo-500">View Jobs</a>
-        </p>
+<body class="bg-gray-100">
+    <div class="flex">
+        <!-- Navigation Panel -->
+        <nav class="w-1/4 bg-white p-6 shadow-md">
+            <ul class="space-y-4">
+                <li><a href="#" class="text-blue-600 hover:text-blue-500">My Profile</a></li>
+                <li><a href="#" class="text-blue-600 hover:text-blue-500">Upload CV</a></li>
+                <li><a href="#" class="text-blue-600 hover:text-blue-500">Exams</a></li>
+                <li><a href="#" class="text-blue-600 hover:text-blue-500">Job Matches</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="w-3/4 p-6">
+            <h1 class="text-2xl font-bold mb-6">Welcome, {{ user.email }}</h1>
+            <p class="text-gray-700 mb-4">Subscription: {{ user.subscription }}</p>
+
+            <!-- CV Status Card -->
+            <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                <h2 class="text-xl font-bold mb-2">CV Status</h2>
+                {% if user.cv %}
+                    <p class="text-green-600">Your CV has been uploaded.</p>
+                {% else %}
+                    <p class="text-red-600">You have not uploaded your CV. <a href="{{ url_for('upload_cv') }}" class="text-indigo-600 hover:text-indigo-500">Upload now</a></p>
+                {% endif %}
+            </div>
+
+            <!-- Exam Results Card -->
+            <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                <h2 class="text-xl font-bold mb-2">Exam Results</h2>
+                <p class="text-gray-700">You have completed 3 exams. Your average score is 85%.</p>
+            </div>
+
+            <!-- Notifications Card -->
+            <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                <h2 class="text-xl font-bold mb-2">Notifications</h2>
+                <p class="text-gray-700">You have 2 new job notifications.</p>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="flex space-x-4">
+                <a href="{{ url_for('take_exam') }}" class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">Take Exam</a>
+                <a href="{{ url_for('screen_cv_route') }}" class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">View CV Feedback</a>
+                <a href="{{ url_for('jobs') }}" class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">View Jobs</a>
+            </div>
+        </div>
     </div>
 </body>
 </html>

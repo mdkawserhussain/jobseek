@@ -5,19 +5,66 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100 flex items-center justify-center h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-lg">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl">
         <h1 class="text-2xl font-bold mb-6 text-center">Exam for {{ user.email }}</h1>
+        <div class="flex justify-between items-center mb-4">
+            <div class="text-gray-700">Time Remaining: <span id="timer">30:00</span></div>
+            <div class="text-gray-700">Progress: <span id="progress">0%</span></div>
+        </div>
         <form method="post" class="space-y-4">
             {% for q in questions %}
-                <div>
-                    <p class="text-gray-700">{{ q.question }}</p>
-                    <input type="text" name="answer" placeholder="Your answer" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"/>
+                <div class="bg-gray-100 p-4 rounded-lg shadow-md">
+                    <p class="text-gray-700 mb-2">{{ q.question }}</p>
+                    {% if q.type == 'text' %}
+                        <input type="text" name="answer_{{ q.id }}" placeholder="Your answer" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"/>
+                    {% elif q.type == 'radio' %}
+                        {% for option in q.options %}
+                            <div class="flex items-center mb-2">
+                                <input type="radio" name="answer_{{ q.id }}" value="{{ option }}" required class="mr-2">
+                                <label class="text-gray-700">{{ option }}</label>
+                            </div>
+                        {% endfor %}
+                    {% elif q.type == 'checkbox' %}
+                        {% for option in q.options %}
+                            <div class="flex items-center mb-2">
+                                <input type="checkbox" name="answer_{{ q.id }}[]" value="{{ option }}" class="mr-2">
+                                <label class="text-gray-700">{{ option }}</label>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
                 </div>
             {% endfor %}
-            <div class="flex items-center justify-between"></div>
+            <div class="flex items-center justify-between">
                 <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Submit Exam</button>
             </div>
         </form>
     </div>
+    <script>
+        // Timer script
+        var timer = document.getElementById('timer');
+        var timeLeft = 1800; // 30 minutes in seconds
+        var timerInterval = setInterval(function() {
+            var minutes = Math.floor(timeLeft / 60);
+            var seconds = timeLeft % 60;
+            timer.textContent = minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+            timeLeft--;
+            if (timeLeft < 0) {
+                clearInterval(timerInterval);
+                alert('Time is up!');
+                document.querySelector('form').submit();
+            }
+        }, 1000);
+
+        // Progress script
+        var progress = document.getElementById('progress');
+        var totalQuestions = {{ questions|length }};
+        var answeredQuestions = 0;
+        document.querySelectorAll('input').forEach(function(input) {
+            input.addEventListener('change', function() {
+                answeredQuestions = document.querySelectorAll('input:checked').length;
+                progress.textContent = Math.floor((answeredQuestions / totalQuestions) * 100) + '%';
+            });
+        });
+    </script>
 </body>
 </html>

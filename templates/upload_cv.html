@@ -8,8 +8,9 @@
     <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-lg">
         <h1 class="text-2xl font-bold mb-6 text-center">Upload Your CV</h1>
         <form method="post" enctype="multipart/form-data" class="space-y-4">
-            <div>
-                <input type="file" name="cv_file" accept="application/pdf" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"><br/>
+            <div class="border-2 border-dashed border-gray-300 p-6 rounded-lg text-center">
+                <input type="file" name="cv_file" accept="application/pdf" class="hidden" id="cv_file">
+                <label for="cv_file" class="cursor-pointer text-blue-600 hover:text-blue-500">Drag and drop your CV here or click to upload</label>
             </div>
             <div class="flex items-center justify-between">
                 <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Upload CV</button>

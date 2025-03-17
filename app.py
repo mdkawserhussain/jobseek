@@ -64,6 +64,22 @@ def send_email(to_address, subject, body, attachment_path=None):
         print(f"Failed to send email: {e}")
         flash("Failed to send email. Please try again later.")
 
+# Function to forward CV to relevant employers and notify users
+
+def forward_cv_to_employers(user, cv_path, industry_name=None):
+    employer_email = "career@britsync.co.uk"  # Replace with the actual employer's email
+    subject = "New CV Submission"
+    body = f"Dear Employer,\n\nA new CV has been submitted by {user.email}.\n\nFeedback:\n{user.cv.feedback}\n\nBest regards,\nBritSync"
+    send_email(employer_email, subject, body, attachment_path=cv_path)
+
+    if user.subscription == 'premium' and industry_name:
+        user_notification = f"Your CV was sent to {industry_name} employers."
+    else:
+        user_notification = "Your CV was sent to an employer."
+
+    send_email(user.email, "CV Submission Notification", user_notification)
+    return user_notification  # Return the notification message
+
 # -------------------------
 # User Registration Endpoint
 # -------------------------
@@ -157,17 +173,10 @@ def upload_cv():
             db.session.commit()
             flash("File successfully uploaded and screened.")
             
-            # Send the CV to the employer's email
-            employer_email = "career@britsync.co.uk"  # Replace with the actual employer's email
-            subject = "New CV Submission"
-            body = f"Dear Employer,\n\nA new CV has been submitted by {user.email}.\n\nFeedback:\n{feedback}\n\nBest regards,\nBritSync"
-            send_email(employer_email, subject, body, attachment_path=file_path)
+            # Forward CV to employers and notify user
+            user_notification = forward_cv_to_employers(user, file_path, industry_name="[Industry Name]")
+            flash(user_notification)  # Flash the notification message to be displayed on the screen
             
-            # Send the CV to raselkathalbagan@gmail.com
-            #rasel_email = "raselkathalbagan@gmail.com"
-            #send_email(rasel_email, subject, body, attachment_path=file_path)
-            
-            flash("File successfully uploaded and screened. Emails sent.")
             return redirect(url_for('screen_cv_route'))
     
     return render_template('upload_cv.html', user=user)
