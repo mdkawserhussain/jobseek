@@ -14,11 +14,17 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
+from werkzeug.middleware.proxy_fix import ProxyFix
+from flask_cors import CORS
+from flask_migrate import Migrate
 
 app = Flask(__name__)
 app.config.from_object(Config)
 app.secret_key = Config.SECRET_KEY
 app.config['UPLOAD_FOLDER'] = 'uploads/'
+
+# Enable CORS for the Flask app
+CORS(app, resources={r"/*": {"origins": "https://appery.io"}})
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -27,6 +33,8 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
 db.init_app(app)
+migrate = Migrate(app, db)  # Initialize Flask-Migrate
+
 with app.app_context():
     db.create_all()
 
@@ -90,6 +98,7 @@ def register():
         email = data.get('email')
         password = data.get('password')
         subscription = data.get('subscription', 'basic')
+        stripe_token = data.get('stripeToken')
         
         if User.query.filter_by(email=email).first():
             flash("User already exists.")
@@ -99,9 +108,16 @@ def register():
         new_user = User(email=email, password=hashed_password, subscription=subscription)
         db.session.add(new_user)
         db.session.commit()
-        
-        # Process registration fee (£5)
-        if process_payment(new_user, 5.0, "Registration Fee"):
+        ###if process_payment(new_user, 5.0, "Registration Fee", stripe_token):
+
+        # Replace the process_payment function call with a dummy implementation for testing
+        if True:  # Bypass actual payment processing for testing
+            payment_record = Payment(amount=5.0, description="Registration Fee", user_id=new_user.id)
+            db.session.add(payment_record)
+
+
+        # Replace the process_payment function call with a dummy implementation for testing
+        if True:  # Bypass actual payment processing for testing
             payment_record = Payment(amount=5.0, description="Registration Fee", user_id=new_user.id)
             db.session.add(payment_record)
             db.session.commit()
@@ -159,24 +175,28 @@ def upload_cv():
         if 'cv_file' not in request.files:
             flash("No file part.")
             return redirect(url_for('upload_cv'))
+        
         file = request.files['cv_file']
         if file.filename == '':
             flash("No selected file.")
             return redirect(url_for('upload_cv'))
+        
         if file and file.filename.endswith('.pdf'):
             filename = secure_filename(file.filename)
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(file_path)
-            feedback = screen_cv(file_path, subscription=user.subscription)
-            new_cv = CV(content=file_path, feedback=feedback, user_id=user.id)
+
+            # Analyze CV
+            analysis = screen_cv(file_path, subscription=user.subscription)
+            feedback = analysis["feedback"]
+            recommendations = "\n".join(analysis["recommendations"])
+
+            # Save to database
+            new_cv = CV(content=file_path, feedback=feedback, recommendations=recommendations, user_id=user.id)
             db.session.add(new_cv)
             db.session.commit()
-            flash("File successfully uploaded and screened.")
-            
-            # Forward CV to employers and notify user
-            user_notification = forward_cv_to_employers(user, file_path, industry_name="[Industry Name]")
-            flash(user_notification)  # Flash the notification message to be displayed on the screen
-            
+
+            flash("File successfully uploaded and analyzed.")
             return redirect(url_for('screen_cv_route'))
     
     return render_template('upload_cv.html', user=user)
@@ -187,11 +207,18 @@ def screen_cv_route():
     if not user_id:
         flash("Unauthorized.")
         return redirect(url_for('login'))
+
     user = db.session.get(User, user_id)
     if not user.cv:
         flash("Please upload your CV first.")
         return redirect(url_for('upload_cv'))
-    return render_template('cv_feedback.html', feedback=user.cv.feedback, user=user)
+    
+    return render_template(
+        'cv_feedback.html',
+        feedback=user.cv.feedback,
+        recommendations=user.cv.recommendations,
+        user=user
+    )
 
 # -------------------------
 # Exam Generation & Submission
@@ -266,6 +293,5 @@ def pay():
 @app.route('/')
 def index():
     return redirect(url_for('login'))
-
 if __name__ == '__main__':
     app.run(debug=True)

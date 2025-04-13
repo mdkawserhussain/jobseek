@@ -1,48 +1,75 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - BritSync</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body class="bg-gray-100 flex items-center justify-center h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-lg">
         <h1 class="text-2xl font-bold mb-6 text-center">Register</h1>
-        <form method="post" class="space-y-4" id="payment-form" action="/register">
-            <div>
-                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                <input type="email" name="email" id="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"/>
+        <form id="registration-form" action="/register" method="post">
+            <div class="mb-4">
+                <label for="email" class="block text-gray-700">Email</label>
+                <input type="email" name="email" id="email" class="w-full p-2 border border-gray-300 rounded mt-1" required>
             </div>
-            <div>
-                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                <input type="password" name="password" id="password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"/>
+            <div class="mb-4">
+                <label for="password" class="block text-gray-700">Password</label>
+                <input type="password" name="password" id="password" class="w-full p-2 border border-gray-300 rounded mt-1" required>
             </div>
-            <div>
-                <label for="subscription" class="block text-sm font-medium text-gray-700">Subscription</label>
-                <select name="subscription" id="subscription" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            <div class="mb-4">
+                <label for="subscription" class="block text-gray-700">Subscription</label>
+                <select name="subscription" id="subscription" class="w-full p-2 border border-gray-300 rounded mt-1">
                     <option value="basic">Basic</option>
                     <option value="premium">Premium</option>
                 </select>
             </div>
-            <div class="flex items-center justify-between">
-                <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Register</button>
+            <div class="mb-4">
+                <label for="card-element" class="block text-gray-700">Credit or Debit Card</label>
+                <div id="card-element" class="w-full p-2 border border-gray-300 rounded mt-1"></div>
+                <div id="card-errors" role="alert" class="text-red-500 mt-2"></div>
             </div>
+            <button type="submit" class="w-full bg-indigo-600 text-white p-2 rounded">Register</button>
         </form>
     </div>
+
+    <script>
+        // var stripe = Stripe('your-publishable-key-here'); // Replace with your Stripe publishable key
+        // Commented out for testing purposes
+        var elements = stripe.elements();
+        var card = elements.create('card');
+        card.mount('#card-element');
+
+        card.on('change', function(event) {
+            var displayError = document.getElementById('card-errors');
+            if (event.error) {
+                displayError.textContent = event.error.message;
+            } else {
+                displayError.textContent = '';
+            }
+        });
+
+        var form = document.getElementById('registration-form');
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            stripe.createToken(card).then(function(result) {
+                if (result.error) {
+                    var errorElement = document.getElementById('card-errors');
+                    errorElement.textContent = result.error.message;
+                } else {
+                    var hiddenInput = document.createElement('input');
+                    hiddenInput.setAttribute('type', 'hidden');
+                    hiddenInput.setAttribute('name', 'stripeToken');
+                    hiddenInput.setAttribute('value', result.token.id);
+                    form.appendChild(hiddenInput);
+
+                    form.submit();
+                }
+            });
+        });
+    </script>
 </body>
 </html>
-<script>
-    document.getElementById('payment-form').addEventListener('submit', async function(event) {
-        event.preventDefault();
-        const form = event.target;
-        const formData = new FormData(form);
-        const response = await fetch(form.action, {
-            method: form.method,
-            body: formData
-        });
-        if (response.ok) {
-            window.location.href = '/dashboard';
-        } else {
-            alert('Registration failed. Please try again.');
-        }
-    });
-</script>

@@ -29,6 +29,19 @@
             <div class="w-1/2 bg-gray-100 p-4 rounded-lg shadow-md">
                 <h2 class="text-xl font-bold mb-2">AI Feedback</h2>
                 <p class="text-gray-700">{{ feedback }}</p>
+                <h2>CV Screening Results</h2>
+                <p><strong>Feedback:</strong> {{ feedback }}</p>
+
+                {% if recommendations %}
+                    <h3>Recommendations</h3>
+                    <ul>
+                        {% for rec in recommendations.split("\n") %}
+                            <li>{{ rec }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>Your CV meets the UK standards! It demonstrates a clear structure, relevant skills, and aligns well with industry expectations in the UK.</p>
+                {% endif %}
             </div>
         </div>
     </div>

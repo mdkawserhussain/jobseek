@@ -21,28 +21,72 @@ def extract_text_from_pdf(pdf_path):
         text += page.get_text()
     return text
 
+def extract_experience(doc):
+    experience = []
+    for sent in doc.sents:
+        if "experience" in sent.text.lower() or "worked" in sent.text.lower() or "responsible" in sent.text.lower():
+            experience.append(sent.text)
+    return experience
+
+def analyze_cv_with_ai(text):
+    """
+    Analyze the CV text using AI to provide detailed feedback and recommendations.
+    """
+    # Example analysis logic (can be replaced with actual AI model integration)
+    feedback = "Your CV uses clear language and has a professional tone."
+    recommendations = []
+
+    if "team player" not in text.lower():
+        recommendations.append("Consider adding 'team player' to highlight collaboration skills.")
+
+    if len(text.split()) > 1000:
+        recommendations.append("Your CV is too lengthy. Aim for a concise format under 2 pages.")
+
+    return {
+        "feedback": feedback,
+        "recommendations": recommendations
+    }
+
 def screen_cv(cv_path, subscription='basic'):
-    if '\0' in cv_path:
-        raise ValueError("Invalid file path: embedded null byte")
-    if cv_path.endswith('.pdf'):
-        cv_text = extract_text_from_pdf(cv_path)
-    else:
-        with open(cv_path, 'r') as file:
-            cv_text = file.read()
-    
-    doc = nlp(cv_text)
-    # Extract skills (this is a placeholder – you may use more complex logic)
-    skills = [ent.text for ent in doc.ents if ent.label_ in ["SKILL", "ORG", "WORK_OF_ART"]]
-    store_skills_in_db(skills)
-    # Simple sentence-based extraction for experience mention
-    experience = [sent.text for sent in doc.sents if "experience" in sent.text.lower()]
-    
-    with open('cv.txt', 'w') as file:
-        file.write('\n'.join(skills))
-    
-    if subscription == 'premium':
-        feedback = f"Detailed Analysis: {len(skills)} skills detected ({', '.join(skills)}). " \
-                   f"Found {len(experience)} experience-related sections."
-    else:
-        feedback = f"Basic Feedback: {len(skills)} skills detected."
-    return feedback
+    """
+    Analyze a CV based on UK standards and provide feedback and recommendations.
+    """
+    with open(cv_path, 'rb') as f:
+        text = extract_text_from_pdf(f)  # Extract text from the PDF
+
+    feedback = ""
+    recommendations = []
+
+    # Basic UK CV Guidelines
+    if len(text) < 200:
+        feedback = "Your CV seems too short. Ensure you include detailed work experience and skills."
+        recommendations.append({
+            "what": "Expand your CV",
+            "why": "A short CV may not provide enough information to showcase your qualifications and experience.",
+            "how": "Add more details about your work experience, skills, and achievements. Use quantifiable metrics where possible."
+        })
+
+    if "Objective" in text or "Career Objective" in text:
+        recommendations.append({
+            "what": "Replace 'Career Objective' with 'Personal Statement'",
+            "why": "'Career Objective' is considered outdated in modern CVs. A 'Personal Statement' is more concise and impactful.",
+            "how": "Write a brief summary of your professional background, key skills, and career goals. Keep it under 4-5 lines."
+        })
+
+    if not any(kw in text.lower() for kw in ["skills", "experience", "education"]):
+        recommendations.append({
+            "what": "Include key sections",
+            "why": "Employers expect to see sections like Skills, Experience, and Education to evaluate your qualifications.",
+            "how": "Add these sections with relevant details. For example, list your skills in bullet points and describe your work experience with job titles, responsibilities, and achievements."
+        })
+
+    # Premium subscription analysis
+    if subscription == "premium":
+        analysis_result = analyze_cv_with_ai(text)
+        feedback += analysis_result.get("feedback", "")
+        recommendations.extend(analysis_result.get("recommendations", []))
+
+    return {
+        "feedback": feedback or "Your CV is well-structured and meets UK standards!",
+        "recommendations": recommendations
+    }
