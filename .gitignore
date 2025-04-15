@@ -27,3 +27,8 @@ Thumbs.db
 # Ignore temporary files
 *.tmp
 *.swp
+# Exclude virtual environment
+venv/
+
+# Exclude Git metadata
+.git/
